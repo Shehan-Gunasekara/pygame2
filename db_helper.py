@@ -11,19 +11,24 @@ class DB_Helper:
         return sqlite3.connect('user_data.db')
 
     def init_game_session(self):
-        """
-        
-        Initialize a new game session.
-
-        """
+        """Initialize a new game session."""
         self.start_time = datetime.datetime.utcnow()
         print("Game session started at:", self.start_time)
 
-    def update_session_count(self):
-        """
-        Increment session count in the database.
+        # Initialize session count if it doesn't exist
+        conn = self.connect_db()
+        cursor = conn.cursor()
         
-        """
+        cursor.execute('''
+            INSERT OR IGNORE INTO game_stats (user_id, total_sessions, total_minutes, total_achievements)
+            VALUES (1, 0, 0, 0)
+        ''')
+        
+        conn.commit()
+        conn.close()
+
+    def update_session_count(self):
+        """Increment session count in the database."""
         conn = self.connect_db()
         cursor = conn.cursor()
         
@@ -38,10 +43,7 @@ class DB_Helper:
         print("Session count updated.")
 
     def update_total_played_time(self):
-        """
-        Update total played time by calculating elapsed minutes.
-        
-        """
+        """Update total played time by calculating elapsed minutes."""
         if not self.start_time:
             print("Error: Game session has not been initialized!")
             return
@@ -63,12 +65,7 @@ class DB_Helper:
         print(f"Total played time updated: {played_minutes} minutes.")
 
     def update_achievements(self, achievements_earned):
-        """
-        Update total achievements in the database.
-
-        Pass no. of achievements every time user achive something
-        
-        """
+        """Update total achievements in the database."""
         conn = self.connect_db()
         cursor = conn.cursor()
 
@@ -81,7 +78,6 @@ class DB_Helper:
         conn.commit()
         conn.close()
         print(f"Achievements updated by {achievements_earned}.")
-
 
     def get_user_data(self, user_id=1):
         """Fetch user details from the database."""
@@ -109,10 +105,18 @@ class DB_Helper:
         conn = self.connect_db()
         cursor = conn.cursor()
 
+        # First ensure the stats record exists
+        cursor.execute('''
+            INSERT OR IGNORE INTO game_stats (user_id, total_sessions, total_minutes, total_achievements)
+            VALUES (?, 0, 0, 0)
+        ''', (user_id,))
+        
         cursor.execute('SELECT total_sessions, total_minutes, total_achievements FROM game_stats WHERE user_id = ?', (user_id,))
         game_data = cursor.fetchone()
 
+        conn.commit()
         conn.close()
+        
         if game_data:
             return {
                 "total_sessions": game_data[0],
@@ -121,14 +125,14 @@ class DB_Helper:
             }
         else:
             print(f"No game data found for user ID {user_id}")
-            return None
+            return {
+                "total_sessions": 0,
+                "total_minutes": 0,
+                "total_achievements": 0
+            }
 
     def end_game_session(self):
-        """
-        
-        Ends the game session and updates session details.
-        
-        """
+        """End the game session and updates session details."""
         self.update_total_played_time()
         self.update_session_count()
         print("Game session ended.")

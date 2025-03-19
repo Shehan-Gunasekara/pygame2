@@ -110,12 +110,13 @@ def wrap_text(text, font, max_width):
 
 
 def get_feedback():
+    print("coin_images length", len(coin_images))
     global difficulty_level
     feedback_text = ""
     collecting_feedback = True
     response_message = ""
 
-
+    db_helper.end_game_session()
     # Stop video recording before feedback starts
     requests.get(f"{LEVEL_PREDICTION_API}/stop_emotion_detection")
 
@@ -161,7 +162,7 @@ def get_feedback():
 
                     user_data = db_helper.get_user_data()
                     game_data = db_helper.get_game_data()
-                  
+                    print(game_data)
 
                     current_level = level
 

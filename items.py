@@ -3,7 +3,7 @@ import pygame
 class Item(pygame.sprite.Sprite):
   def __init__(self, x, y, item_type, animation_list, dummy_coin = False):
     pygame.sprite.Sprite.__init__(self)
-    self.item_type = item_type#0: coin, 1: health potion
+    self.item_type = item_type  # 0: coin, 1: health potion
     self.animation_list = animation_list
     self.frame_index = 0
     self.update_time = pygame.time.get_ticks()
@@ -12,19 +12,22 @@ class Item(pygame.sprite.Sprite):
     self.rect.center = (x, y)
     self.dummy_coin = dummy_coin
 
-  def update(self, screen_scroll, player, coin_fx, heal_fx):
-    #doesn't apply to the dummy coin that is always displayed at the top of the screen
+  def update(self, screen_scroll, player, coin_fx, heal_fx, db_helper=None):
+    # doesn't apply to the dummy coin that is always displayed at the top of the screen
     if not self.dummy_coin:
-      #reposition based on screen scroll
+      # reposition based on screen scroll
       self.rect.x += screen_scroll[0]
       self.rect.y += screen_scroll[1]
 
-    #check to see if item has been collected by the player
+    # check to see if item has been collected by the player
     if self.rect.colliderect(player.rect):
-      #coin collected
+      # coin collected
       if self.item_type == 0:
         player.score += 1
         coin_fx.play()
+        # Update achievements when coin is collected
+        if db_helper:
+          db_helper.update_achievements(1)
       elif self.item_type == 1:
         player.health += 10
         heal_fx.play()
@@ -32,18 +35,17 @@ class Item(pygame.sprite.Sprite):
           player.health = 100
       self.kill()
 
-    #handle animation
+    # handle animation
     animation_cooldown = 150
-    #update image
+    # update image
     self.image = self.animation_list[self.frame_index]
-    #check if enough time has passed since the last update
+    # check if enough time has passed since the last update
     if pygame.time.get_ticks() - self.update_time > animation_cooldown:
       self.frame_index += 1
       self.update_time = pygame.time.get_ticks()
-    #check if the animation has finished
+    # check if the animation has finished
     if self.frame_index >= len(self.animation_list):
       self.frame_index = 0
-
 
   def draw(self, surface):
     surface.blit(self.image, self.rect)
