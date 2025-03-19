@@ -161,7 +161,7 @@ def get_feedback():
 
                     user_data = db_helper.get_user_data()
                     game_data = db_helper.get_game_data()
-                    print(game_data)
+                  
 
                     current_level = level
 
@@ -175,6 +175,8 @@ def get_feedback():
                         "achivements": game_data.get("total_achievements", 0),
                         "feedback": feedback_text
                     }
+                    
+                    print("game data----",game_data)
 
                     response = requests.post(f"{LEVEL_PREDICTION_API}/get-next-level-difficulty", json=request_data)
                     emotion_response(response.text)

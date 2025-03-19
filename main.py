@@ -9,7 +9,6 @@ def close_app():
 
 eel.expose(close_app)
 
-
 def connect_db():
     return sqlite3.connect('user_data.db')
 
@@ -51,11 +50,11 @@ def insert_or_update_user(age, location, gender, difficulty):
             UPDATE users
             SET age = ?, location = ?, gender = ?, difficulty = ?
             WHERE id = 1
-        ''', (age, location, gender))
+        ''', (age, location, gender, difficulty))
     else:
         cursor.execute('''
-            INSERT INTO users (age, location, gender, difficulty)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO users (id, age, location, gender, difficulty)
+            VALUES (1, ?, ?, ?, ?)
         ''', (age, location, gender, difficulty))
 
         cursor.execute('''
@@ -67,7 +66,6 @@ def insert_or_update_user(age, location, gender, difficulty):
                 )
             VALUES (?, ?, ?, ?)
         ''', (1, 0, 0, 0))
-    
     
     conn.commit()
     conn.close()
@@ -83,28 +81,32 @@ def get_user_data():
 @eel.expose
 def get_user():
     user = get_user_data()
-    print(user)
     if user:
         return {'age': user[1], 'location': user[2], 'gender': user[3], 'difficulty': user[4]}
     else:
         return None
 
+@eel.expose
+def delete_user():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM game_stats WHERE user_id = 1')
+    cursor.execute('DELETE FROM users WHERE id = 1')
+    conn.commit()
+    conn.close()
+    return True
 
 @eel.expose
 def submit_form(age, location, gender, difficulty):
     print(f"Submitted: Age={age}, Location={location}, Gender={gender}, difficulty={difficulty}")
     insert_or_update_user(age, location, gender, difficulty)
-    os.system("python game.py") 
-
+    os.system("python game.py")
 
 @eel.expose
 def open_game():
-    os.system("python game.py")  
+    os.system("python game.py")
     os._exit(0)
-
-
 
 create_db()
 
-
-eel.start('templates/index.html', size=(800, 600), )
+eel.start('templates/index.html', size=(800, 600))
